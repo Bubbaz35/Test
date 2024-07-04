@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Algo Trading Analytics - Results</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href='https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/fullcalendar.min.css' rel='stylesheet' />
+<script src='https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js'></script>
+<script src='https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/fullcalendar.min.js'></script>
+
+  </head>
+  <body>
+    <div class="container mt-5">
+      <h1>Daily Profit/Loss</h1>
+      <div>
+        <canvas id="profitLossChart"></canvas>
+      </div>
+      <h2 class="mt-5">Monthly Statistics</h2>
+      <div id="monthlyStats"></div>
+    </div>
+    <h2 class="mt-5">Daily Profit/Loss Calendar</h2>
+<div id='calendar'></div>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const calendarEl = document.getElementById('calendar');
+    const events = profitLossData.map(d => ({
+      title: `P/L: ${d['Profit/Loss'].toFixed(2)}`,
+      start: d.Date
+    }));
+
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+      initialView: 'dayGridMonth',
+      events: events
+    });
+
+    calendar.render();
+  });
+</script>
+
+    <script>
+      const ctx = document.getElementById('profitLossChart').getContext('2d');
+      const profitLossData = {{ profit_loss_data | tojson }};
+      const labels = profitLossData.map(d => d.Date);
+      const data = profitLossData.map(d => d['Profit/Loss']);
+
+      const chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Daily Profit/Loss',
+            data: data,
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+
+      // Monthly Statistics
+      const monthlyStatsDiv = document.getElementById('monthlyStats');
+      const monthlyStats = {};
+
+      profitLossData.forEach(d => {
+        const date = new Date(d.Date);
+        const month = date.getMonth();
+        const year = date.getFullYear();
+        const key = `${year}-${month + 1}`;
+
+        if (!monthlyStats[key]) {
+          monthlyStats[key] = { profit: 0, days: 0 };
+        }
+        monthlyStats[key].profit += d['Profit/Loss'];
+        monthlyStats[key].days += 1;
+      });
+
+      for (const [key, value] of Object.entries(monthlyStats)) {
+        const div = document.createElement('div');
+        div.innerHTML = `<strong>${key}</strong>: ${value.profit.toFixed(2)} (over ${value.days} days)`;
+        monthlyStatsDiv.appendChild(div);
+      }
+    </script>
+  </body>
+</html>
