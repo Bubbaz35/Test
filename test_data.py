@@ -10,11 +10,11 @@ random.seed(42)
 num_trades = 1000
 
 # List of S&P 500 companies' tickers (sample)
-tickers = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'FB', 'BRK.B', 'JPM', 'JNJ', 'V']
+tickers = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'FB', 'BRK.B', 'JPM', 'JNJ', 'V','C','F','MMM','AMD','ABNB','T','DAL','DPZ','HPQ','JNJ','KHC','MA','META','NKE']
 
 # Generate random trade data
 data = []
-start_date = datetime(2023, 1, 1)
+start_date = datetime(2022, 1, 1)
 for i in range(1, num_trades + 1):
     trade_id = i
     timestamp = start_date + timedelta(minutes=random.randint(0, 525600))  # Random minute in 2023

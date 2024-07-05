@@ -3,57 +3,52 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Algo Trading Analytics - Results</title>
+    <title>Algo Trading Analytics</title>
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href='https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/fullcalendar.min.css' rel='stylesheet' />
-<script src='https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js'></script>
-<script src='https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/fullcalendar.min.js'></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
   </head>
   <body>
     <div class="container mt-5">
       <h1>Daily Profit/Loss</h1>
-      <div>
-        <canvas id="profitLossChart"></canvas>
-      </div>
+      <canvas id="profitLossChart"></canvas>
       <h2 class="mt-5">Monthly Statistics</h2>
       <div id="monthlyStats"></div>
+      <canvas id="monthlyChart" class="mt-4"></canvas>
     </div>
-    <h2 class="mt-5">Daily Profit/Loss Calendar</h2>
-<div id='calendar'></div>
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-    const calendarEl = document.getElementById('calendar');
-    const events = profitLossData.map(d => ({
-      title: `P/L: ${d['Profit/Loss'].toFixed(2)}`,
-      start: d.Date
-    }));
-
-    const calendar = new FullCalendar.Calendar(calendarEl, {
-      initialView: 'dayGridMonth',
-      events: events
-    });
-
-    calendar.render();
-  });
-</script>
-
     <script>
-      const ctx = document.getElementById('profitLossChart').getContext('2d');
+      // Parse data from Flask
       const profitLossData = {{ profit_loss_data | tojson }};
+      const monthlyProfitLossData = {{ monthly_profit_loss_data | tojson }};
+      
+      // Log data to console for debugging
+      console.log("Profit/Loss Data:", profitLossData);
+      console.log("Monthly Profit/Loss Data:", monthlyProfitLossData);
+
+      // Format dates to YYYY-MM-DD
       const labels = profitLossData.map(d => d.Date);
       const data = profitLossData.map(d => d['Profit/Loss']);
+      
+      // Log formatted labels and data
+      console.log("Labels:", labels);
+      console.log("Data:", data);
 
+      // Format numbers as currency
+      const formatCurrency = (value) => {
+        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
+      };
+
+      // Profit/Loss Line Chart
+      const ctx = document.getElementById('profitLossChart').getContext('2d');
       const chart = new Chart(ctx, {
         type: 'line',
         data: {
           labels: labels,
           datasets: [{
-            label: 'Daily Profit/Loss',
+            label: 'Daily Profit/Loss (USD)',
             data: data,
             borderColor: 'rgba(75, 192, 192, 1)',
             borderWidth: 1
@@ -61,35 +56,72 @@
         },
         options: {
           scales: {
+            x: {
+              type: 'time',
+              time: {
+                unit: 'day',
+                displayFormats: {
+                  day: 'yyyy-MM-dd'
+                }
+              },
+              ticks: {
+                source: 'auto'
+              }
+            },
             y: {
-              beginAtZero: true
+              beginAtZero: true,
+              ticks: {
+                callback: function(value) {
+                  return formatCurrency(value);
+                }
+              }
             }
           }
         }
       });
 
-      // Monthly Statistics
-      const monthlyStatsDiv = document.getElementById('monthlyStats');
-      const monthlyStats = {};
+      // Monthly Statistics Bar Chart
+      const monthlyLabels = monthlyProfitLossData.map(d => d.YearMonth);
+      const monthlyData = monthlyProfitLossData.map(d => d['Profit/Loss']);
+      
+      // Log formatted monthly labels and data
+      console.log("Monthly Labels:", monthlyLabels);
+      console.log("Monthly Data:", monthlyData);
 
-      profitLossData.forEach(d => {
-        const date = new Date(d.Date);
-        const month = date.getMonth();
-        const year = date.getFullYear();
-        const key = `${year}-${month + 1}`;
-
-        if (!monthlyStats[key]) {
-          monthlyStats[key] = { profit: 0, days: 0 };
+      const ctx2 = document.getElementById('monthlyChart').getContext('2d');
+      const monthlyChart = new Chart(ctx2, {
+        type: 'bar',
+        data: {
+          labels: monthlyLabels,
+          datasets: [{
+            label: 'Monthly Profit/Loss (USD)',
+            data: monthlyData,
+            backgroundColor: 'rgba(75, 192, 192, 0.5)',
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: function(value) {
+                  return formatCurrency(value);
+                }
+              }
+            }
+          }
         }
-        monthlyStats[key].profit += d['Profit/Loss'];
-        monthlyStats[key].days += 1;
       });
 
-      for (const [key, value] of Object.entries(monthlyStats)) {
+      // Monthly Statistics Text
+      const monthlyStatsDiv = document.getElementById('monthlyStats');
+      monthlyProfitLossData.forEach(d => {
         const div = document.createElement('div');
-        div.innerHTML = `<strong>${key}</strong>: ${value.profit.toFixed(2)} (over ${value.days} days)`;
+        div.innerHTML = `<strong>${d.YearMonth}</strong>: ${formatCurrency(d['Profit/Loss'])}`;
         monthlyStatsDiv.appendChild(div);
-      }
+      });
     </script>
   </body>
 </html>

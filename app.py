@@ -1,6 +1,5 @@
 from flask import Flask, render_template, request
 import pandas as pd
-from datetime import datetime
 
 app = Flask(__name__)
 
@@ -13,33 +12,28 @@ def calculate_profit_loss(df):
     df['Profit/Loss'] = df.apply(lambda row: row['Trade Value'] if row['Trade Type'] == 'Sell' else -row['Trade Value'], axis=1)
     daily_profit_loss = df.groupby('Date')['Profit/Loss'].sum().reset_index()
 
-    # Calculate monthly statistics
+    # Calculate monthly profit/loss
     df['YearMonth'] = df['Timestamp'].dt.to_period('M')
     monthly_profit_loss = df.groupby('YearMonth')['Profit/Loss'].sum().reset_index()
     monthly_profit_loss['YearMonth'] = monthly_profit_loss['YearMonth'].astype(str)
-
+    
     return daily_profit_loss, monthly_profit_loss
 
 @app.route('/')
 def index():
     return render_template('index.html')
 
-@app.route('/upload', methods=['POST'])
-def upload_file():
-    if 'file' not in request.files:
-        return 'No file part'
+@app.route('/results', methods=['POST'])
+def results():
     file = request.files['file']
-    if file.filename == '':
-        return 'No selected file'
-    if file:
-        df = pd.read_csv(file)
-        daily_profit_loss, monthly_profit_loss = calculate_profit_loss(df)
-        daily_profit_loss_dict = daily_profit_loss.to_dict(orient='records')
-        monthly_profit_loss_dict = monthly_profit_loss.to_dict(orient='records')
-        return render_template('results.html', 
-                               profit_loss_data=daily_profit_loss_dict, 
-                               monthly_profit_loss_data=monthly_profit_loss_dict)
-    return 'File not uploaded'
+    df = pd.read_csv(file)
+
+    daily_profit_loss, monthly_profit_loss = calculate_profit_loss(df)
+
+    profit_loss_data = daily_profit_loss.to_dict(orient='records')
+    monthly_profit_loss_data = monthly_profit_loss.to_dict(orient='records')
+
+    return render_template('results.html', profit_loss_data=profit_loss_data, monthly_profit_loss_data=monthly_profit_loss_data)
 
 if __name__ == '__main__':
     app.run(debug=True)
