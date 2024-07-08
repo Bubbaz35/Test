@@ -12,29 +12,34 @@
   </head>
   <body>
     <div class="container mt-5">
-      <h1>Daily Profit/Loss</h1>
+      <h1>Current Balance: {{ current_balance }}</h1>
+      <h1 class="mt-5">Daily Profit/Loss</h1>
       <div>
         <canvas id="profitLossChart"></canvas>
       </div>
-      <h2 class="mt-5">Monthly Statistics</h2>
-      <div id="monthlyStats"></div>
-      <h2 class="mt-5">Profit/Loss by Share</h2>
-      <div id="profitLossByShare"></div>
+      <h2 class="mt-5">Monthly Performance</h2>
+      <div>
+        <canvas id="monthlyPerformanceChart"></canvas>
+      </div>
+      <h2 class="mt-5">Performance per Share</h2>
+      <div>
+        <canvas id="performanceByShareChart"></canvas>
+      </div>
     </div>
     <script>
       // Daily Profit/Loss Chart
-      const ctx = document.getElementById('profitLossChart').getContext('2d');
+      const profitLossCtx = document.getElementById('profitLossChart').getContext('2d');
       const profitLossData = {{ profit_loss_data | tojson }};
-      const labels = profitLossData.map(d => d.Date);
-      const data = profitLossData.map(d => parseFloat(d['Profit/Loss'].replace(/[^0-9.-]+/g,"")));
+      const profitLossLabels = profitLossData.map(d => d.Date);
+      const profitLossValues = profitLossData.map(d => parseFloat(d['Profit/Loss'].replace(/[^0-9.-]+/g,"")));
 
-      const chart = new Chart(ctx, {
+      const profitLossChart = new Chart(profitLossCtx, {
         type: 'line',
         data: {
-          labels: labels,
+          labels: profitLossLabels,
           datasets: [{
             label: 'Daily Profit/Loss',
-            data: data,
+            data: profitLossValues,
             borderColor: 'rgba(75, 192, 192, 1)',
             borderWidth: 1
           }]
@@ -48,22 +53,58 @@
         }
       });
 
-      // Monthly Statistics
-      const monthlyStatsDiv = document.getElementById('monthlyStats');
-      const monthlyStatsData = {{ monthly_profit_loss_data | tojson }};
-      monthlyStatsData.forEach(stat => {
-        const div = document.createElement('div');
-        div.innerHTML = `<strong>${stat.YearMonth}</strong>: ${stat['Profit/Loss']}`;
-        monthlyStatsDiv.appendChild(div);
+      // Monthly Performance Chart
+      const monthlyPerformanceCtx = document.getElementById('monthlyPerformanceChart').getContext('2d');
+      const monthlyPerformanceData = {{ monthly_profit_loss_data | tojson }};
+      const monthlyPerformanceLabels = monthlyPerformanceData.map(d => d.YearMonth);
+      const monthlyPerformanceValues = monthlyPerformanceData.map(d => parseFloat(d['Profit/Loss'].replace(/[^0-9.-]+/g,"")));
+
+      const monthlyPerformanceChart = new Chart(monthlyPerformanceCtx, {
+        type: 'bar',
+        data: {
+          labels: monthlyPerformanceLabels,
+          datasets: [{
+            label: 'Monthly Performance',
+            data: monthlyPerformanceValues,
+            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
       });
 
-      // Profit/Loss by Share
-      const profitLossByShareDiv = document.getElementById('profitLossByShare');
-      const profitLossByShareData = {{ profit_loss_by_share_data | tojson }};
-      profitLossByShareData.forEach(stat => {
-        const div = document.createElement('div');
-        div.innerHTML = `<strong>${stat.Ticker}</strong>: ${stat['Profit/Loss']}`;
-        profitLossByShareDiv.appendChild(div);
+      // Performance by Share Chart
+      const performanceByShareCtx = document.getElementById('performanceByShareChart').getContext('2d');
+      const performanceByShareData = {{ profit_loss_by_share_data | tojson }};
+      const performanceByShareLabels = performanceByShareData.map(d => d.Ticker);
+      const performanceByShareValues = performanceByShareData.map(d => parseFloat(d['Profit/Loss'].replace(/[^0-9.-]+/g,"")));
+
+      const performanceByShareChart = new Chart(performanceByShareCtx, {
+        type: 'bar',
+        data: {
+          labels: performanceByShareLabels,
+          datasets: [{
+            label: 'Performance by Share',
+            data: performanceByShareValues,
+            backgroundColor: 'rgba(153, 102, 255, 0.2)',
+            borderColor: 'rgba(153, 102, 255, 1)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
       });
     </script>
   </body>

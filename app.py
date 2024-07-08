@@ -29,7 +29,11 @@ def calculate_profit_loss(df):
     profit_loss_by_share = df.groupby('Ticker')['Profit/Loss'].sum().reset_index()
     profit_loss_by_share['Profit/Loss'] = profit_loss_by_share['Profit/Loss'].apply(lambda x: format_currency(x))
 
-    return daily_profit_loss, monthly_profit_loss, profit_loss_by_share
+    # Calculate current balance
+    current_balance = df['Profit/Loss'].sum()
+    current_balance = format_currency(current_balance)
+
+    return daily_profit_loss, monthly_profit_loss, profit_loss_by_share, current_balance
 
 @app.route('/')
 def index():
@@ -45,14 +49,15 @@ def upload_file():
     if file:
         df = pd.read_csv(file)
         print(df.columns)  # Print the column names for debugging
-        daily_profit_loss, monthly_profit_loss, profit_loss_by_share = calculate_profit_loss(df)
+        daily_profit_loss, monthly_profit_loss, profit_loss_by_share, current_balance = calculate_profit_loss(df)
         daily_profit_loss_dict = daily_profit_loss.to_dict(orient='records')
         monthly_profit_loss_dict = monthly_profit_loss.to_dict(orient='records')
         profit_loss_by_share_dict = profit_loss_by_share.to_dict(orient='records')
         return render_template('results.html', 
                                profit_loss_data=daily_profit_loss_dict, 
                                monthly_profit_loss_data=monthly_profit_loss_dict,
-                               profit_loss_by_share_data=profit_loss_by_share_dict)
+                               profit_loss_by_share_data=profit_loss_by_share_dict,
+                               current_balance=current_balance)
     return 'File not uploaded'
 
 if __name__ == '__main__':
