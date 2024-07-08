@@ -4,23 +4,30 @@ from datetime import datetime
 
 app = Flask(__name__)
 
+def format_currency(value, symbol='$'):
+    return f"{symbol}{value:,.2f}"
+
 def calculate_profit_loss(df):
     df['Timestamp'] = pd.to_datetime(df['Timestamp'])
     df['Date'] = df['Timestamp'].dt.date
 
-    # Calculate daily profit/loss
-    df['Trade Value'] = df.apply(lambda row: row['Shares Traded'] * row['Price per Share'], axis=1)
+    # Calculate trade value and profit/loss
+    df['Trade Value'] = df['Shares Traded'] * df['Price per Share']
     df['Profit/Loss'] = df.apply(lambda row: row['Trade Value'] if row['Trade Type'] == 'Sell' else -row['Trade Value'], axis=1)
-    
+
+    # Calculate daily profit/loss
     daily_profit_loss = df.groupby('Date')['Profit/Loss'].sum().reset_index()
+    daily_profit_loss['Profit/Loss'] = daily_profit_loss['Profit/Loss'].apply(lambda x: format_currency(x))
 
     # Calculate monthly statistics
     df['YearMonth'] = df['Timestamp'].dt.to_period('M')
     monthly_profit_loss = df.groupby('YearMonth')['Profit/Loss'].sum().reset_index()
     monthly_profit_loss['YearMonth'] = monthly_profit_loss['YearMonth'].astype(str)
+    monthly_profit_loss['Profit/Loss'] = monthly_profit_loss['Profit/Loss'].apply(lambda x: format_currency(x))
 
     # Calculate profit/loss by share
     profit_loss_by_share = df.groupby('Ticker')['Profit/Loss'].sum().reset_index()
+    profit_loss_by_share['Profit/Loss'] = profit_loss_by_share['Profit/Loss'].apply(lambda x: format_currency(x))
 
     return daily_profit_loss, monthly_profit_loss, profit_loss_by_share
 
@@ -37,6 +44,7 @@ def upload_file():
         return 'No selected file'
     if file:
         df = pd.read_csv(file)
+        print(df.columns)  # Print the column names for debugging
         daily_profit_loss, monthly_profit_loss, profit_loss_by_share = calculate_profit_loss(df)
         daily_profit_loss_dict = daily_profit_loss.to_dict(orient='records')
         monthly_profit_loss_dict = monthly_profit_loss.to_dict(orient='records')
