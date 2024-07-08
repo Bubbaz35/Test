@@ -10,9 +10,8 @@
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href='https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/fullcalendar.min.css' rel='stylesheet' />
-<script src='https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js'></script>
-<script src='https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/fullcalendar.min.js'></script>
-
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/fullcalendar.min.js'></script>
   </head>
   <body>
     <div class="container mt-5">
@@ -22,6 +21,8 @@
       </div>
       <h2 class="mt-5">Monthly Statistics</h2>
       <div id="monthlyStats"></div>
+      <h2 class="mt-5">Profit/Loss by Share</h2>
+      <div id="profitLossByShare"></div>
     </div>
     <script>
       const ctx = document.getElementById('profitLossChart').getContext('2d');
@@ -51,26 +52,23 @@
 
       // Monthly Statistics
       const monthlyStatsDiv = document.getElementById('monthlyStats');
-      const monthlyStats = {};
+      const monthlyStats = {{ monthly_profit_loss_data | tojson }};
 
-      profitLossData.forEach(d => {
-        const date = new Date(d.Date);
-        const month = date.getMonth();
-        const year = date.getFullYear();
-        const key = `${year}-${month + 1}`;
-
-        if (!monthlyStats[key]) {
-          monthlyStats[key] = { profit: 0, days: 0 };
-        }
-        monthlyStats[key].profit += d['Profit/Loss'];
-        monthlyStats[key].days += 1;
+      monthlyStats.forEach(stat => {
+        const div = document.createElement('div');
+        div.innerHTML = `<strong>${stat.YearMonth}</strong>: ${stat['Profit/Loss'].toFixed(2)}`;
+        monthlyStatsDiv.appendChild(div);
       });
 
-      for (const [key, value] of Object.entries(monthlyStats)) {
+      // Profit/Loss by Share
+      const profitLossByShareDiv = document.getElementById('profitLossByShare');
+      const profitLossByShare = {{ profit_loss_by_share_data | tojson }};
+
+      profitLossByShare.forEach(share => {
         const div = document.createElement('div');
-        div.innerHTML = `<strong>${key}</strong>: ${value.profit.toFixed(2)} (over ${value.days} days)`;
-        monthlyStatsDiv.appendChild(div);
-      }
+        div.innerHTML = `<strong>${share['Ticker']}</strong>: ${share['Profit/Loss'].toFixed(2)}`;
+        profitLossByShareDiv.appendChild(div);
+      });
     </script>
   </body>
 </html>

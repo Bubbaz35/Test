@@ -11,6 +11,7 @@ def calculate_profit_loss(df):
     # Calculate daily profit/loss
     df['Trade Value'] = df.apply(lambda row: row['Shares Traded'] * row['Price per Share'], axis=1)
     df['Profit/Loss'] = df.apply(lambda row: row['Trade Value'] if row['Trade Type'] == 'Sell' else -row['Trade Value'], axis=1)
+    
     daily_profit_loss = df.groupby('Date')['Profit/Loss'].sum().reset_index()
 
     # Calculate monthly statistics
@@ -18,7 +19,10 @@ def calculate_profit_loss(df):
     monthly_profit_loss = df.groupby('YearMonth')['Profit/Loss'].sum().reset_index()
     monthly_profit_loss['YearMonth'] = monthly_profit_loss['YearMonth'].astype(str)
 
-    return daily_profit_loss, monthly_profit_loss
+    # Calculate profit/loss by share
+    profit_loss_by_share = df.groupby('Ticker')['Profit/Loss'].sum().reset_index()
+
+    return daily_profit_loss, monthly_profit_loss, profit_loss_by_share
 
 @app.route('/')
 def index():
@@ -33,12 +37,14 @@ def upload_file():
         return 'No selected file'
     if file:
         df = pd.read_csv(file)
-        daily_profit_loss, monthly_profit_loss = calculate_profit_loss(df)
+        daily_profit_loss, monthly_profit_loss, profit_loss_by_share = calculate_profit_loss(df)
         daily_profit_loss_dict = daily_profit_loss.to_dict(orient='records')
         monthly_profit_loss_dict = monthly_profit_loss.to_dict(orient='records')
+        profit_loss_by_share_dict = profit_loss_by_share.to_dict(orient='records')
         return render_template('results.html', 
                                profit_loss_data=daily_profit_loss_dict, 
-                               monthly_profit_loss_data=monthly_profit_loss_dict)
+                               monthly_profit_loss_data=monthly_profit_loss_dict,
+                               profit_loss_by_share_data=profit_loss_by_share_dict)
     return 'File not uploaded'
 
 if __name__ == '__main__':
