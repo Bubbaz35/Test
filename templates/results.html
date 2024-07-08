@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Algo Trading Analytics</title>
@@ -9,119 +9,121 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
-  </head>
-  <body>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@2.0.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@2.16.1"></script>
+</head>
+<body>
     <div class="container mt-5">
-      <h1>Daily Profit/Loss</h1>
-      <canvas id="profitLossChart"></canvas>
-      <h2 class="mt-5">Monthly Statistics</h2>
-      <div id="monthlyStats"></div>
-      <canvas id="monthlyChart" class="mt-4"></canvas>
+        <h1>Daily Profit/Loss</h1>
+        <canvas id="profitLossChart"></canvas>
+        <h2 class="mt-5">Monthly Statistics</h2>
+        <div id="monthlyStats"></div>
+        <canvas id="monthlyChart" class="mt-4"></canvas>
     </div>
     <script>
-      // Parse data from Flask
-      const profitLossData = {{ profit_loss_data | tojson }};
-      const monthlyProfitLossData = {{ monthly_profit_loss_data | tojson }};
-      
-      // Log data to console for debugging
-      console.log("Profit/Loss Data:", profitLossData);
-      console.log("Monthly Profit/Loss Data:", monthlyProfitLossData);
+        // Parse data from Flask
+        const profitLossData = {{ profit_loss_data | tojson }};
+        const monthlyProfitLossData = {{ monthly_profit_loss_data | tojson }};
+        
+        // Log data to console for debugging
+        console.log("Profit/Loss Data:", profitLossData);
+        console.log("Monthly Profit/Loss Data:", monthlyProfitLossData);
 
-      // Format dates to YYYY-MM-DD
-      const labels = profitLossData.map(d => d.Date);
-      const data = profitLossData.map(d => d['Profit/Loss']);
-      
-      // Log formatted labels and data
-      console.log("Labels:", labels);
-      console.log("Data:", data);
+        // Format dates to YYYY-MM-DD and convert to Date objects
+        const labels = profitLossData.map(d => new Date(d.Date));
+        const data = profitLossData.map(d => d['Profit/Loss']);
+        
+        // Log formatted labels and data
+        console.log("Labels:", labels);
+        console.log("Data:", data);
 
-      // Format numbers as currency
-      const formatCurrency = (value) => {
-        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
-      };
+        // Format numbers as currency
+        const formatCurrency = (value) => {
+            return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
+        };
 
-      // Profit/Loss Line Chart
-      const ctx = document.getElementById('profitLossChart').getContext('2d');
-      const chart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: labels,
-          datasets: [{
-            label: 'Daily Profit/Loss (USD)',
-            data: data,
-            borderColor: 'rgba(75, 192, 192, 1)',
-            borderWidth: 1
-          }]
-        },
-        options: {
-          scales: {
-            x: {
-              type: 'time',
-              time: {
-                unit: 'day',
-                displayFormats: {
-                  day: 'yyyy-MM-dd'
-                }
-              },
-              ticks: {
-                source: 'auto'
-              }
+        // Profit/Loss Line Chart
+        const ctx = document.getElementById('profitLossChart').getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Daily Profit/Loss (USD)',
+                    data: data,
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
             },
-            y: {
-              beginAtZero: true,
-              ticks: {
-                callback: function(value) {
-                  return formatCurrency(value);
+            options: {
+                scales: {
+                    x: {
+                        type: 'time',
+                        time: {
+                            unit: 'day',
+                            tooltipFormat: 'yyyy-MM-dd',
+                            displayFormats: {
+                                day: 'yyyy-MM-dd'
+                            }
+                        },
+                        ticks: {
+                            source: 'auto'
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return formatCurrency(value);
+                            }
+                        }
+                    }
                 }
-              }
             }
-          }
-        }
-      });
+        });
 
-      // Monthly Statistics Bar Chart
-      const monthlyLabels = monthlyProfitLossData.map(d => d.YearMonth);
-      const monthlyData = monthlyProfitLossData.map(d => d['Profit/Loss']);
-      
-      // Log formatted monthly labels and data
-      console.log("Monthly Labels:", monthlyLabels);
-      console.log("Monthly Data:", monthlyData);
+        // Monthly Statistics Bar Chart
+        const monthlyLabels = monthlyProfitLossData.map(d => d.YearMonth);
+        const monthlyData = monthlyProfitLossData.map(d => d['Profit/Loss']);
+        
+        // Log formatted monthly labels and data
+        console.log("Monthly Labels:", monthlyLabels);
+        console.log("Monthly Data:", monthlyData);
 
-      const ctx2 = document.getElementById('monthlyChart').getContext('2d');
-      const monthlyChart = new Chart(ctx2, {
-        type: 'bar',
-        data: {
-          labels: monthlyLabels,
-          datasets: [{
-            label: 'Monthly Profit/Loss (USD)',
-            data: monthlyData,
-            backgroundColor: 'rgba(75, 192, 192, 0.5)',
-            borderColor: 'rgba(75, 192, 192, 1)',
-            borderWidth: 1
-          }]
-        },
-        options: {
-          scales: {
-            y: {
-              beginAtZero: true,
-              ticks: {
-                callback: function(value) {
-                  return formatCurrency(value);
+        const ctx2 = document.getElementById('monthlyChart').getContext('2d');
+        const monthlyChart = new Chart(ctx2, {
+            type: 'bar',
+            data: {
+                labels: monthlyLabels,
+                datasets: [{
+                    label: 'Monthly Profit/Loss (USD)',
+                    data: monthlyData,
+                    backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return formatCurrency(value);
+                            }
+                        }
+                    }
                 }
-              }
             }
-          }
-        }
-      });
+        });
 
-      // Monthly Statistics Text
-      const monthlyStatsDiv = document.getElementById('monthlyStats');
-      monthlyProfitLossData.forEach(d => {
-        const div = document.createElement('div');
-        div.innerHTML = `<strong>${d.YearMonth}</strong>: ${formatCurrency(d['Profit/Loss'])}`;
-        monthlyStatsDiv.appendChild(div);
-      });
+        // Monthly Statistics Text
+        const monthlyStatsDiv = document.getElementById('monthlyStats');
+        monthlyProfitLossData.forEach(d => {
+            const div = document.createElement('div');
+            div.innerHTML = `<strong>${d.YearMonth}</strong>: ${formatCurrency(d['Profit/Loss'])}`;
+            monthlyStatsDiv.appendChild(div);
+        });
     </script>
-  </body>
+</body>
 </html>
