@@ -23,25 +23,6 @@
       <h2 class="mt-5">Monthly Statistics</h2>
       <div id="monthlyStats"></div>
     </div>
-    <h2 class="mt-5">Daily Profit/Loss Calendar</h2>
-<div id='calendar'></div>
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-    const calendarEl = document.getElementById('calendar');
-    const events = profitLossData.map(d => ({
-      title: `P/L: ${d['Profit/Loss'].toFixed(2)}`,
-      start: d.Date
-    }));
-
-    const calendar = new FullCalendar.Calendar(calendarEl, {
-      initialView: 'dayGridMonth',
-      events: events
-    });
-
-    calendar.render();
-  });
-</script>
-
     <script>
       const ctx = document.getElementById('profitLossChart').getContext('2d');
       const profitLossData = {{ profit_loss_data | tojson }};
