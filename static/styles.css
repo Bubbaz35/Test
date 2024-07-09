@@ -1,0 +1,27 @@
+body {
+    font-family: Arial, sans-serif;
+}
+
+.navbar-brand, .nav-link {
+    color: #007bff !important;
+}
+
+.table {
+    margin-top: 20px;
+}
+
+.table thead th {
+    background-color: #f8f9fa;
+}
+
+h2 {
+    margin-top: 20px;
+}
+
+h3 {
+    margin-top: 10px;
+}
+
+.container {
+    margin-top: 50px;
+}
