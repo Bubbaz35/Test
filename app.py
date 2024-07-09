@@ -1,8 +1,14 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect, url_for
 import pandas as pd
 from datetime import datetime
 
 app = Flask(__name__)
+
+# Global variables to hold the data
+daily_profit_loss_data = None
+monthly_profit_loss_data = None
+profit_loss_by_share_data = None
+current_balance = None
 
 def format_currency(value, symbol='$'):
     return f"{symbol}{value:,.2f}"
@@ -41,6 +47,7 @@ def index():
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
+    global daily_profit_loss_data, monthly_profit_loss_data, profit_loss_by_share_data, current_balance
     if 'file' not in request.files:
         return 'No file part'
     file = request.files['file']
@@ -50,15 +57,30 @@ def upload_file():
         df = pd.read_csv(file)
         print(df.columns)  # Print the column names for debugging
         daily_profit_loss, monthly_profit_loss, profit_loss_by_share, current_balance = calculate_profit_loss(df)
-        daily_profit_loss_dict = daily_profit_loss.to_dict(orient='records')
-        monthly_profit_loss_dict = monthly_profit_loss.to_dict(orient='records')
-        profit_loss_by_share_dict = profit_loss_by_share.to_dict(orient='records')
-        return render_template('results.html', 
-                               profit_loss_data=daily_profit_loss_dict, 
-                               monthly_profit_loss_data=monthly_profit_loss_dict,
-                               profit_loss_by_share_data=profit_loss_by_share_dict,
-                               current_balance=current_balance)
+        daily_profit_loss_data = daily_profit_loss.to_dict(orient='records')
+        monthly_profit_loss_data = monthly_profit_loss.to_dict(orient='records')
+        profit_loss_by_share_data = profit_loss_by_share.to_dict(orient='records')
+        return redirect(url_for('home'))
     return 'File not uploaded'
+
+@app.route('/home')
+def home():
+    global daily_profit_loss_data, current_balance
+    return render_template('home.html', 
+                           profit_loss_data=daily_profit_loss_data,
+                           current_balance=current_balance)
+
+@app.route('/monthly')
+def monthly():
+    global monthly_profit_loss_data
+    return render_template('monthly.html', 
+                           monthly_profit_loss_data=monthly_profit_loss_data)
+
+@app.route('/shares')
+def shares():
+    global profit_loss_by_share_data
+    return render_template('shares.html', 
+                           profit_loss_by_share_data=profit_loss_by_share_data)
 
 if __name__ == '__main__':
     app.run(debug=True)

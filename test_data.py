@@ -22,7 +22,7 @@ for i in range(1, num_trades + 1):
     ticker = random.choice(tickers)
     trade_type = random.choice(['Buy', 'Sell'])
     shares_traded = random.randint(10, 500)
-    price_per_share = round(random.uniform(100, 3500), 2)
+    price_per_share = round(random.uniform(10, 500), 2)
     trade_value = round(shares_traded * price_per_share, 2)
     data.append([trade_id, timestamp, ticker, trade_type, shares_traded, price_per_share, trade_value])
 
