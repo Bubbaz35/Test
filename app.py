@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for
 import pandas as pd
 import os
+import yfinance as yf
 
 app = Flask(__name__)
 
@@ -54,33 +55,13 @@ def shares():
 # Route for ticker details page
 @app.route('/ticker/<ticker>')
 def ticker_details(ticker):
-    data = pd.read_csv('sample_algo_trades.csv')
-    ticker_data = data[data['Ticker'] == ticker]
+    # Load the trades data
+    df = pd.read_csv('sample_algo_trades.csv')
 
-    ticker_data['Profit/Loss'] = ticker_data.apply(
-        lambda row: row['Trade Value'] if row['Trade Type'] == 'Sell' else -row['Trade Value'], axis=1)
-    
-    ticker_data['Cumulative P/L'] = ticker_data['Profit/Loss'].cumsum()
+    # Filter trades for the specified ticker
+    trades = df[df['Ticker'] == ticker].to_dict(orient='records')
 
-    ticker_data['Profit/Loss'] = ticker_data['Profit/Loss'].apply(lambda x: f"${x:,.2f}")
-    ticker_data['Cumulative P/L'] = ticker_data['Cumulative P/L'].apply(lambda x: f"${x:,.2f}")
-
-    # Generate the table HTML
-    table_html = ticker_data.to_html(index=False, classes='table table-striped', justify='center', border=0, escape=False)
-
-    # Calculate the performance chart data
-    chart_data = ticker_data[['Timestamp', 'Cumulative P/L']]
-    chart_data['Timestamp'] = pd.to_datetime(chart_data['Timestamp']).dt.strftime('%Y-%m-%d')
-    chart_data.set_index('Timestamp', inplace=True)
-    
-    # Convert chart data to JSON for the chart
-    chart_data_json = chart_data.to_json(orient='split')
-
-    return render_template('ticker_details.html', ticker=ticker, table_html=table_html, chart_data=chart_data_json)
-    # Placeholder for live value
-    live_value = 0  # Replace with real-time fetching logic if available
-
-    return render_template('ticker_details.html', ticker=ticker, ticker_data=ticker_data, live_value=live_value)
+    return render_template('ticker_details.html', ticker=ticker, trades=trades)
 
 if __name__ == '__main__':
     app.run(debug=True)
