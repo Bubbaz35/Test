@@ -1,9 +1,5 @@
 - Create a date range slider where the app uses the first trade date and the current date as the min / max values
 - Create a calendar with the corresponding days P/L included
 - Create larger date range with bigger dataset
-- Add dollar symbols
-- Add CSS file and common header
-- A tab with more information of the stocks used (Share prices, Win or Loss, Amount gained or lost, percentage gained or lost)
-- A tab with the current analysis of the stocks in scope (Share prices, Sharpe Ratio, P/L, etc.)
-- Live data from Yahoo finance
 - A more efficient way to read data without having yo use CSV file
+- Change from Degiro to Interactive Brokers API
