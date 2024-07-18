@@ -5,8 +5,14 @@ import yfinance as yf
 
 app = Flask(__name__)
 
-# Assume df is your DataFrame
+# Load the DataFrame
 df = pd.read_csv('sample_algo_trades.csv')
+
+# Ensure the DataFrame has the necessary columns
+required_columns = ['Ticker', 'Company', 'Exchange', 'Sector', 'Profit/Loss Amount', 'Trade Value', 'Timestamp']
+for col in required_columns:
+    if col not in df.columns:
+        df[col] = None  # Add the column with None values if it doesn't exist
 
 # Route for the home page
 @app.route('/')
@@ -33,23 +39,31 @@ def monthly():
 @app.route('/shares')
 def shares():
     # Calculate profit/loss per share data
-    profit_loss_by_share_data = df.groupby('Ticker')['Trade Value'].sum().reset_index()
-    profit_loss_by_share_data.columns = ['Ticker', 'Profit/Loss']
-    profit_loss_by_share_data['Company'] = profit_loss_by_share_data['Ticker'].map({
+    profit_loss_by_share_data = df.groupby('Ticker').agg(
+        Company=('Company', 'first'),
+        Exchange=('Exchange', 'first'),
+        Sector=('Sector', 'first'),
+        Profit_Loss=('Profit/Loss Amount', 'sum')
+    ).reset_index()
+
+    # Manually map company names and other details if necessary
+    company_mapping = {
         'AAPL': 'Apple Inc.',
         'MSFT': 'Microsoft Corporation',
         'GOOGL': 'Alphabet Inc.',
         'AMZN': 'Amazon.com, Inc.',
         'TSLA': 'Tesla, Inc.',
-        'FB': 'Meta Platforms, Inc.',
+        'META': 'Meta Platforms, Inc.',
         'BRK.B': 'Berkshire Hathaway Inc.',
         'JPM': 'JPMorgan Chase & Co.',
         'JNJ': 'Johnson & Johnson',
         'V': 'Visa Inc.'
-    })
-    profit_loss_by_share_data['Exchange'] = 'NASDAQ'  # Example, replace with actual data
-    profit_loss_by_share_data['Sector'] = 'Technology'  # Example, replace with actual data
+    }
+    profit_loss_by_share_data['Company'] = profit_loss_by_share_data['Ticker'].map(company_mapping)
+    profit_loss_by_share_data['Exchange'] = profit_loss_by_share_data['Exchange'].fillna('NASDAQ')  # Example, replace with actual data
+    profit_loss_by_share_data['Sector'] = profit_loss_by_share_data['Sector'].fillna('Technology')  # Example, replace with actual data
     profit_loss_by_share_data = profit_loss_by_share_data.to_dict(orient='records')
+
     return render_template('shares.html', profit_loss_by_share_data=profit_loss_by_share_data)
 
 # Route for ticker details page
@@ -61,7 +75,15 @@ def ticker_details(ticker):
     # Filter trades for the specified ticker
     trades = df[df['Ticker'] == ticker].to_dict(orient='records')
 
-    return render_template('ticker_details.html', ticker=ticker, trades=trades)
+    # Fetch live stock price using yfinance
+    stock = yf.Ticker(ticker)
+    history = stock.history(period='1d')
+    if not history.empty:
+        live_price = history['Close'][0]
+    else:
+        live_price = 'N/A'  # Or handle this case as you see fit
+
+    return render_template('ticker_details.html', ticker=ticker, trades=trades, live_price=live_price)
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -24,7 +24,7 @@
           <td>{{ entry.Company }}</td>
           <td>{{ entry.Exchange }}</td>
           <td>{{ entry.Sector }}</td>
-          <td>${{ "%.2f" | format(entry['Profit/Loss']) }}</td>
+          <td>${{ "%.2f" | format(entry.Profit_Loss) }}</td>
         </tr>
       {% endfor %}
     </tbody>
@@ -33,7 +33,7 @@
     const ctx = document.getElementById('sharePerformanceChart').getContext('2d');
     const shareData = {{ profit_loss_by_share_data | tojson }};
     const labels = shareData.map(d => d.Ticker);
-    const data = shareData.map(d => d['Profit/Loss'].toFixed(2));
+    const data = shareData.map(d => d.Profit_Loss.toFixed(2));
 
     const chart = new Chart(ctx, {
       type: 'bar',

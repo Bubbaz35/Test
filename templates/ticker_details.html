@@ -7,7 +7,7 @@
   
   <!-- Display the live stock price -->
   <div>
-    <h3>Live Price: $<span id="livePrice">Loading...</span></h3>
+    <h3>Live Price: ${{ "%.2f" | format(live_price) }}</h3>
   </div>
 
   <!-- Table to display trade details -->
@@ -41,20 +41,4 @@
       {% endfor %}
     </tbody>
   </table>
-
-  <!-- Script to fetch live price from Yahoo Finance -->
-  <script>
-  const ticker = "AAPL";
-  const baseUrl = "https://query1.finance.yahoo.com/v8/finance/chart/";
-  const interval = "?interval=1d";
-
-  const url = baseUrl + ticker + interval;
-    fetch(url)
-      .then(response => response.json())
-      .then(data => {
-        const livePrice = data.chart.result[0].meta.regularMarketPrice.toFixed(2);
-        document.getElementById('livePrice').textContent = livePrice;
-      })
-      .catch(error => console.error('Error fetching live price:', error));
-  </script>
 {% endblock %}
