@@ -1,39 +1,189 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Algo Trading Analytics - Home</title>
-    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
-  </head>
-  <body>
-   <nav class="navbar navbar-expand-lg navbar-light bg-light">
-      <a class="navbar-brand" href="/">Algo Trading Analytics</a>
-      <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav">
-          <li class="nav-item">
-            <a class="nav-link" href="/">Home</a>
-          </li>
-          <li class="nav-item active">
-            <a class="nav-link" href="/monthly.html">Monthly Statistics</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="/shares.html">Performance per Share</a>
-          </li>
-        </ul>
-      </div>
-    </nav>
-    <div class="container mt-5">
-      <h1 class="mb-4">Upload CSV File</h1>
-      <form action="/upload" method="post" enctype="multipart/form-data">
-        <div class="form-group">
-          <input type="file" class="form-control-file" name="file">
-        </div>
-        <button type="submit" class="btn btn-primary">Upload</button>
-      </form>
+    <title>Portfolio Analysis</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .stats-section {
+            margin-bottom: 20px;
+        }
+        .stats-table {
+            margin-bottom: 20px;
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .stats-table th, .stats-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        .charts-container {
+            display: flex;
+            justify-content: space-around;
+        }
+        .chart-container {
+            width: 45%;
+        }
+    </style>
+</head>
+<body>
+    <h1>My Stock Portfolio</h1>
+
+    <div class="stats-section">
+        <h2>Portfolio Statistics</h2>
+        <table class="stats-table">
+            <thead>
+                <tr>
+                    <th>Total Portfolio Value (EUR)</th>
+                    <th>Total Profit/Loss (EUR)</th>
+                    <th>Average ROI (%)</th>
+                    <th>Total Dividends (EUR)</th>
+                    <th>Portfolio Growth (%)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td id="totalValue">Loading...</td>
+                    <td id="totalProfitLoss">Loading...</td>
+                    <td id="averageROI">Loading...</td>
+                    <td id="totalDividends">Loading...</td>
+                    <td id="portfolioGrowth">Loading...</td>
+                </tr>
+            </tbody>
+        </table>
     </div>
-  </body>
+
+    <h2>Portfolio Details</h2>
+    <table id="portfolioTable">
+        <thead>
+            <tr>
+                <th>Ticker</th>
+                <th>Stock Name</th>
+                <th>Sector</th>
+                <th>Shares</th>
+                <th>Purchase Price</th>
+                <th>Transaction Cost</th>
+                <th>Current Price</th>
+                <th>Value</th>
+                <th>Profit/Loss</th>
+                <th>ROI</th>
+                <th>Daily Return</th>
+                <th>Volatility</th>
+                <th>Sharpe Ratio</th>
+                <th>Sell Signal</th>
+                <th>Outperform S&P500</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td colspan="15">Loading...</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="charts-container">
+        <div class="chart-container">
+            <h3>Profit/Loss Graph</h3>
+            <canvas id="profitLossChart"></canvas>
+        </div>
+        <div class="chart-container">
+            <h3>ROI Chart</h3>
+            <canvas id="roiChart"></canvas>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Fetch data from the backend and display the portfolio and stats
+        fetch('/api/portfolio')
+            .then(response => response.json())
+            .then(data => {
+                const portfolioData = data.portfolio;
+                const stats = data.stats;
+
+                // Update statistics section
+                document.getElementById('totalValue').textContent = stats.total_value.toFixed(2);
+                document.getElementById('totalProfitLoss').textContent = stats.total_profit_loss.toFixed(2);
+                document.getElementById('averageROI').textContent = stats.average_roi.toFixed(2) + '%';
+                document.getElementById('totalDividends').textContent = stats.total_dividends.toFixed(2);
+                document.getElementById('portfolioGrowth').textContent = stats.portfolio_growth.toFixed(2) + '%';
+
+                // Populate table with portfolio data
+                const tableBody = document.getElementById('portfolioTable').getElementsByTagName('tbody')[0];
+                tableBody.innerHTML = '';  // Clear loading row
+                portfolioData.forEach(stock => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${stock.Ticker}</td>
+                        <td>${stock.Stock_Name}</td>
+                        <td>${stock.Sector}</td>
+                        <td>${stock.Shares}</td>
+                        <td>${stock.Purchase_Price.toFixed(2)}</td>
+                        <td>${stock.Transaction_Cost.toFixed(2)}</td>
+                        <td>${stock.Current_Price.toFixed(2)}</td>
+                        <td>${stock.Value.toFixed(2)}</td>
+                        <td>${stock.Profit_Loss.toFixed(2)}</td>
+                        <td>${stock.ROI.toFixed(2)}</td>
+                        <td>${stock.Daily_Return.toFixed(4)}</td>
+                        <td>${stock.Volatility.toFixed(4)}</td>
+                        <td>${stock.Sharpe_Ratio.toFixed(4)}</td>
+                        <td>${stock.Sell_Signal}</td>
+                        <td>${stock.Outperform_SP500}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+
+                // Profit/Loss Chart
+                const profitLossCtx = document.getElementById('profitLossChart').getContext('2d');
+                new Chart(profitLossCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: portfolioData.map(stock => stock.Ticker),
+                        datasets: [{
+                            label: 'Profit/Loss (EUR)',
+                            data: portfolioData.map(stock => stock.Profit_Loss.toFixed(2)),
+                            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 1
+                        }]
+                    }
+                });
+
+                // ROI Chart (Now Bar Chart)
+                const roiCtx = document.getElementById('roiChart').getContext('2d');
+                new Chart(roiCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: portfolioData.map(stock => stock.Ticker),
+                        datasets: [{
+                            label: 'ROI (%)',
+                            data: portfolioData.map(stock => stock.ROI.toFixed(2)),
+                            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            borderWidth: 1
+                        }]
+                    }
+                });
+            })
+            .catch(error => console.error('Error fetching data:', error));
+    </script>
+</body>
 </html>

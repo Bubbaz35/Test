@@ -1,89 +1,102 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, jsonify, render_template
 import pandas as pd
-import os
-import yfinance as yf
+import requests
 
 app = Flask(__name__)
 
-# Load the DataFrame
-df = pd.read_csv('sample_algo_trades.csv')
+# Function to get exchange rates (called once)
+def get_exchange_rates():
+    try:
+        # Make the request to get all rates for EUR
+        url = f"https://api.exchangeratesapi.io/v1/latest?access_key=b2404051663928f7afe34c2fdf9f93ce"
+        response = requests.get(url)
 
-# Ensure the DataFrame has the necessary columns
-required_columns = ['Ticker', 'Company', 'Exchange', 'Sector', 'Profit/Loss Amount', 'Trade Value', 'Timestamp']
-for col in required_columns:
-    if col not in df.columns:
-        df[col] = None  # Add the column with None values if it doesn't exist
+        if response.status_code == 200:
+            data = response.json()
+            return data['rates']  # Return the full rates dictionary
+        else:
+            print(f"Failed to get exchange rates. Status code: {response.status_code}")
+            return {}  # Return an empty dictionary in case of error
+    except Exception as e:
+        print(f"Exception occurred during getting exchange rates: {e}")
+        return {}
 
-# Route for the home page
-@app.route('/')
-@app.route('/home')
-def home():
-    # Calculate current balance and daily profit/loss data
-    current_balance = df['Trade Value'].sum()  # Example calculation
-    profit_loss_data = df.groupby(df['Timestamp'].str[:10])['Trade Value'].sum().reset_index()
-    profit_loss_data.columns = ['Date', 'Profit/Loss']
-    profit_loss_data = profit_loss_data.to_dict(orient='records')
-    return render_template('home.html', current_balance=current_balance, profit_loss_data=profit_loss_data)
-
-# Route for the monthly statistics page
-@app.route('/monthly')
-def monthly():
-    # Calculate monthly profit/loss data
-    df['YearMonth'] = df['Timestamp'].str[:7]
-    monthly_profit_loss_data = df.groupby('YearMonth')['Trade Value'].sum().reset_index()
-    monthly_profit_loss_data.columns = ['YearMonth', 'Profit/Loss']
-    monthly_profit_loss_data = monthly_profit_loss_data.to_dict(orient='records')
-    return render_template('monthly.html', monthly_profit_loss_data=monthly_profit_loss_data)
-
-# Route for the performance per share page
-@app.route('/shares')
-def shares():
-    # Calculate profit/loss per share data
-    profit_loss_by_share_data = df.groupby('Ticker').agg(
-        Company=('Company', 'first'),
-        Exchange=('Exchange', 'first'),
-        Sector=('Sector', 'first'),
-        Profit_Loss=('Profit/Loss Amount', 'sum')
-    ).reset_index()
-
-    # Manually map company names and other details if necessary
-    company_mapping = {
-        'AAPL': 'Apple Inc.',
-        'MSFT': 'Microsoft Corporation',
-        'GOOGL': 'Alphabet Inc.',
-        'AMZN': 'Amazon.com, Inc.',
-        'TSLA': 'Tesla, Inc.',
-        'META': 'Meta Platforms, Inc.',
-        'BRK.B': 'Berkshire Hathaway Inc.',
-        'JPM': 'JPMorgan Chase & Co.',
-        'JNJ': 'Johnson & Johnson',
-        'V': 'Visa Inc.'
-    }
-    profit_loss_by_share_data['Company'] = profit_loss_by_share_data['Ticker'].map(company_mapping)
-    profit_loss_by_share_data['Exchange'] = profit_loss_by_share_data['Exchange'].fillna('NASDAQ')  # Example, replace with actual data
-    profit_loss_by_share_data['Sector'] = profit_loss_by_share_data['Sector'].fillna('Technology')  # Example, replace with actual data
-    profit_loss_by_share_data = profit_loss_by_share_data.to_dict(orient='records')
-
-    return render_template('shares.html', profit_loss_by_share_data=profit_loss_by_share_data)
-
-# Route for ticker details page
-@app.route('/ticker/<ticker>')
-def ticker_details(ticker):
-    # Load the trades data
-    df = pd.read_csv('sample_algo_trades.csv')
-
-    # Filter trades for the specified ticker
-    trades = df[df['Ticker'] == ticker].to_dict(orient='records')
-
-    # Fetch live stock price using yfinance
-    stock = yf.Ticker(ticker)
-    history = stock.history(period='1d')
-    if not history.empty:
-        live_price = history['Close'][0]
+# Function to convert a value to EUR using pre-fetched rates
+def convert_to_eur(value, currency, rates):
+    if currency == 'EUR':  # No conversion needed
+        return value
+    # Get the conversion rate from the rates dictionary
+    eur_rate = rates.get(currency)
+    if eur_rate:
+        return value / eur_rate  # Convert value to EUR
     else:
-        live_price = 'N/A'  # Or handle this case as you see fit
+        print(f"Error: Conversion rate for {currency} not found.")
+        return value  # Fallback to original value if rate is not found
 
-    return render_template('ticker_details.html', ticker=ticker, trades=trades, live_price=live_price)
+
+@app.route('/api/portfolio', methods=['GET'])
+def get_portfolio_data():
+    try:
+        # Get the exchange rates only once
+        exchange_rates = get_exchange_rates()
+
+        # Load portfolio data from Excel
+        file_path = 'portfolio_analysis_with_dates.xlsx'
+        df = pd.read_excel(file_path)
+
+        # Combine duplicate tickers
+        df_combined = df.groupby(['Ticker', 'Stock_Name', 'Sector', 'Currency', 'Sell_Signal']).agg({
+            'Shares': 'sum',
+            'Purchase_Price': 'mean',
+            'Transaction_Cost': 'sum',
+            'Current_Price': 'mean',
+            'PE_Ratio': 'mean',
+            'Dividends': 'sum',
+            'Value': 'sum',
+            'Total_Return': 'mean',
+            'Profit_Loss': 'sum',
+            'ROI': 'mean',
+            'Daily_Return': 'mean',
+            'Volatility': 'mean',
+            'Sharpe_Ratio': 'mean',
+            'Outperform_SP500': 'first'
+        }).reset_index()
+
+        # Convert values to EUR for statistics using pre-fetched rates
+        total_value = sum([convert_to_eur(row['Value'], row['Currency'], exchange_rates) for _, row in df_combined.iterrows()])
+        total_profit_loss = sum([convert_to_eur(row['Profit_Loss'], row['Currency'], exchange_rates) for _, row in df_combined.iterrows()])
+        total_dividends = sum([convert_to_eur(row['Dividends'], row['Currency'], exchange_rates) for _, row in df_combined.iterrows()])
+
+        # Portfolio growth calculation
+        total_invested = sum([row['Purchase_Price'] * row['Shares'] for _, row in df_combined.iterrows()])
+        portfolio_growth = (total_value - total_invested) / total_invested * 100
+
+        # Average ROI
+        average_roi = df_combined['ROI'].mean()
+
+        stats = {
+            'total_value': total_value,
+            'total_profit_loss': total_profit_loss,
+            'average_roi': average_roi,
+            'total_dividends': total_dividends,
+            'portfolio_growth': portfolio_growth
+        }
+
+        # Convert the dataframe to JSON
+        portfolio_data = df_combined.to_dict(orient='records')
+
+        return jsonify({
+            'portfolio': portfolio_data,
+            'stats': stats
+        })
+
+    except Exception as e:
+        print(f"Error reading portfolio data: {e}")
+        return jsonify({'error': 'Failed to load portfolio data'}), 500
+
+@app.route('/')
+def index():
+    return render_template('index.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
