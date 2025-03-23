@@ -1,0 +1,9 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "portfolio.py", "use": "@vercel/python" }
+  ],
+  "routes": [
+    { "src": "/.*", "dest": "portfolio.py" }
+  ]
+}
