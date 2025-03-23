@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -6,38 +7,87 @@
     <!-- Link to compiled Tailwind CSS -->
     <link href="{{ url_for('static', filename='css/styles.css') }}" rel="stylesheet">
 </head>
-<body>
-    <h1>Portfolio Analysis</h1>
-    <table border="1">
-        {% for row in portfolio %}
-        <tr>
-            {% for val in row.values() %}
-            <td>{{ val }}</td>
-            {% endfor %}
-        </tr>
-        {% endfor %}
-    </table>
+<body class="bg-gray-50 text-gray-900">
+    <div class="container mx-auto px-4 py-6">
+        <!-- Header Section -->
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-blue-600">Stocks Dashboard</h1>
+        </header>
 
-    <h1>Stock Screener Results</h1>
-    <table border="1">
-        {% for row in screener %}
-        <tr>
-            {% for val in row.values() %}
-            <td>{{ val }}</td>
-            {% endfor %}
-        </tr>
-        {% endfor %}
-    </table>
+        <!-- Portfolio Analysis Table -->
+        <section>
+            <h2 class="text-3xl font-semibold text-gray-800 mb-4">Portfolio Analysis</h2>
+            <div class="overflow-x-auto bg-white shadow-lg rounded-lg">
+                <table class="min-w-full table-auto">
+                    <thead class="bg-blue-500 text-white">
+                        <tr>
+                            {% for column in portfolio[0].keys() %}
+                            <th class="px-6 py-3 text-left">{{ column }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in portfolio %}
+                        <tr class="border-t">
+                            {% for val in row.values() %}
+                            <td class="px-6 py-4">{{ val }}</td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
 
-    <h1>Evaluation Results</h1>
-    <table border="1">
-        {% for row in evaluation %}
-        <tr>
-            {% for val in row.values() %}
-            <td>{{ val }}</td>
-            {% endfor %}
-        </tr>
-        {% endfor %}
-    </table>
+        <!-- Stock Screener Results Table -->
+        <section class="mt-8">
+            <h2 class="text-3xl font-semibold text-gray-800 mb-4">Stock Screener Results</h2>
+            <div class="overflow-x-auto bg-white shadow-lg rounded-lg">
+                <table class="min-w-full table-auto">
+                    <thead class="bg-blue-500 text-white">
+                        <tr>
+                            {% for column in screener[0].keys() %}
+                            <th class="px-6 py-3 text-left">{{ column }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in screener %}
+                        <tr class="border-t">
+                            {% for val in row.values() %}
+                            <td class="px-6 py-4">{{ val }}</td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Evaluation Results Table -->
+        <section class="mt-8">
+            <h2 class="text-3xl font-semibold text-gray-800 mb-4">Evaluation Results</h2>
+            <div class="overflow-x-auto bg-white shadow-lg rounded-lg">
+                <table class="min-w-full table-auto">
+                    <thead class="bg-blue-500 text-white">
+                        <tr>
+                            {% for column in evaluation[0].keys() %}
+                            <th class="px-6 py-3 text-left">{{ column }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in evaluation %}
+                        <tr class="border-t">
+                            {% for val in row.values() %}
+                            <td class="px-6 py-4">{{ val }}</td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
 </body>
 </html>
