@@ -1,232 +1,40 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stock Portfolio Overview</title>
-    
-    <!-- Include Bootstrap CSS -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
-    
-    <!-- Include Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Chart.js Plugin for Datalabels -->
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+    <title>Stock Dashboard</title>
 </head>
 <body>
+    <h1>Portfolio Analysis</h1>
+    <table border="1">
+        {% for row in portfolio %}
+        <tr>
+            {% for val in row.values() %}
+            <td>{{ val }}</td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </table>
 
-    <div class="container">
-        <h1 class="text-center mt-5">Stock Portfolio Overview</h1>
+    <h1>Stock Screener Results</h1>
+    <table border="1">
+        {% for row in screener %}
+        <tr>
+            {% for val in row.values() %}
+            <td>{{ val }}</td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </table>
 
-        <!-- Portfolio Table -->
-        <h2 class="mt-5">Portfolio Table</h2>
-        <table class="table">
-            <thead>
-                <tr>
-                    <th scope="col">Ticker</th>
-                    <th scope="col">Stock Name</th>
-                    <th scope="col">Sector</th>
-                    <th scope="col">Shares</th>
-                    <th scope="col">Purchase Price</th>
-                    <th scope="col">Current Price</th>
-                    <th scope="col">Value</th>
-                    <th scope="col">Profit/Loss</th>
-                    <th scope="col">Sell Signal</th>
-                </tr>
-            </thead>
-            <tbody id="portfolioTableBody">
-            </tbody>
-        </table>
-
-        <!-- Portfolio Statistics -->
-        <h2 class="mt-5">Portfolio Statistics</h2>
-        <table class="table">
-            <thead>
-                <tr>
-                    <th scope="col">Total Value (EUR)</th>
-                    <th scope="col">Total Invested (EUR)</th>
-                    <th scope="col">Total Profit/Loss (EUR)</th>
-                    <th scope="col">Average ROI (%)</th>
-                    <th scope="col">Total Dividends (EUR)</th>
-                    <th scope="col">Portfolio Growth (%)</th>
-                </tr>
-            </thead>
-            <tbody id="portfolioStatsBody">
-            </tbody>
-        </table>
-
-        <!-- ROI Vertical Bar Chart -->
-        <h2 class="mt-5">Return on Investment (ROI)</h2>
-        <canvas id="roiChart" style="max-width: 80%; height: 500px; margin: 0 auto;"></canvas>
-
-        
-
-        <!-- Sector Breakdown Pie Chart -->
-        <h2 class="mt-5">Portfolio Breakdown by Sector</h2>
-        <canvas id="sectorChart" style="max-width: 80%; height: 500px; margin: 0 auto;"></canvas>
-
-        <!-- Sector Percentage Table -->
-        <h3 class="mt-5">Sector Percentage of Portfolio</h3>
-        <table class="table">
-            <thead>
-                <tr>
-                    <th scope="col">Sector</th>
-                    <th scope="col">Value (EUR)</th>
-                    <th scope="col">Percentage of Portfolio (%)</th>
-                </tr>
-            </thead>
-            <tbody id="sectorPercentageTableBody">
-            </tbody>
-        </table>
-    </div>
-
-    <script>
-        // Fetch portfolio data
-        fetch('/api/portfolio')
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    console.error('Error fetching data:', data.error);
-                    return;
-                }
-
-                const portfolio = data.portfolio;
-                const stats = data.stats;
-
-                // Populate the portfolio table
-                const portfolioTableBody = document.querySelector('#portfolioTableBody');
-                portfolio.forEach(stock => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${stock.Ticker}</td>
-                        <td>${stock.Stock_Name}</td>
-                        <td>${stock.Sector}</td>
-                        <td>${stock.Shares}</td>
-                        <td>${stock.Purchase_Price.toFixed(2)}</td>
-                        <td>${stock.Current_Price.toFixed(2)}</td>
-                        <td>${stock.Value.toFixed(2)}</td>
-                        <td>${stock.Profit_Loss.toFixed(2)}</td>
-                        <td>${stock.Sell_Signal}</td>
-                    `;
-                    portfolioTableBody.appendChild(row);
-                });
-
-                // Populate the portfolio stats table
-                const statsTableBody = document.querySelector('#portfolioStatsBody');
-                const statsRow = document.createElement('tr');
-                statsRow.innerHTML = `
-                    <td>${stats.total_value.toFixed(2)}</td>
-                    <td>${stats.total_invested.toFixed(2)}</td>
-                    <td>${stats.total_profit_loss.toFixed(2)}</td>
-                    <td>${stats.average_roi.toFixed(2)}</td>
-                    <td>${stats.total_dividends.toFixed(2)}</td>
-                    <td>${stats.portfolio_growth.toFixed(2)}</td>
-                `;
-                statsTableBody.appendChild(statsRow);
-
-                // ROI Vertical Bar Chart
-                var ctxRoi = document.getElementById('roiChart').getContext('2d');
-                var roiChart = new Chart(ctxRoi, {
-                    type: 'bar',
-                    data: {
-                        labels: portfolio.map(stock => stock.Stock_Name),
-                        datasets: [{
-                            label: 'ROI (%)',
-                            data: portfolio.map(stock => stock.ROI),
-                            backgroundColor: function(context) {
-                                var value = context.raw;
-                                return value > 0 ? 'rgba(75, 192, 192, 0.2)' : 'rgba(255, 99, 132, 0.2)';
-                            },
-                            borderColor: function(context) {
-                                var value = context.raw;
-                                return value > 0 ? 'rgba(75, 192, 192, 1)' : 'rgba(255, 99, 132, 1)';
-                            },
-                            borderWidth: 1
-                        }]
-                    },
-                    options: {
-                        scales: {
-                            y: {
-                                beginAtZero: true
-                            }
-                        }
-                    }
-                });
-
-                // Sector Breakdown Pie Chart
-                var ctxSector = document.getElementById('sectorChart').getContext('2d');
-                var sectorData = portfolio.reduce((acc, stock) => {
-                    acc[stock.Sector] = (acc[stock.Sector] || 0) + stock.Value;
-                    return acc;
-                }, {});
-
-                var sectorChart = new Chart(ctxSector, {
-                    type: 'pie',
-                    data: {
-                        labels: Object.keys(sectorData),
-                        datasets: [{
-                            data: Object.values(sectorData),
-                            backgroundColor: [
-                                'rgba(75, 192, 192, 0.2)',
-                                'rgba(255, 99, 132, 0.2)',
-                                'rgba(54, 162, 235, 0.2)',
-                                'rgba(153, 102, 255, 0.2)',
-                                'rgba(255, 159, 64, 0.2)',
-                                'rgba(255, 206, 86, 0.2)'
-                            ],
-                            borderColor: [
-                                'rgba(75, 192, 192, 1)',
-                                'rgba(255, 99, 132, 1)',
-                                'rgba(54, 162, 235, 1)',
-                                'rgba(153, 102, 255, 1)',
-                                'rgba(255, 159, 64, 1)',
-                                'rgba(255, 206, 86, 1)'
-                            ],
-                            borderWidth: 1
-                        }]
-                    },
-                    options: {
-                        plugins: {
-                            datalabels: {
-                                formatter: (value, ctx) => {
-                                    let sum = 0;
-                                    let dataArr = ctx.chart.data.datasets[0].data;
-                                    dataArr.forEach(data => {
-                                        sum += data;
-                                    });
-                                    let percentage = (value * 100 / sum).toFixed(2) + "%";
-                                    return percentage;
-                                },
-                                color: '#fff',
-                            }
-                        }
-                    }
-                });
-
-                // Sector Percentage Table
-                const sectorPercentageTableBody = document.querySelector('#sectorPercentageTableBody');
-                const totalPortfolioValue = stats.total_value;
-                
-                Object.keys(sectorData).forEach(sector => {
-                    const sectorValue = sectorData[sector];
-                    const percentage = ((sectorValue / totalPortfolioValue) * 100).toFixed(2);
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${sector}</td>
-                        <td>${sectorValue.toFixed(2)}</td>
-                        <td>${percentage}%</td>
-                    `;
-                    sectorPercentageTableBody.appendChild(row);
-                });
-            })
-            .catch(error => console.error('Error fetching portfolio data:', error));
-    </script>
-
-
-
-    <!-- Bootstrap JS and dependencies -->
-    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+    <h1>Evaluation Results</h1>
+    <table border="1">
+        {% for row in evaluation %}
+        <tr>
+            {% for val in row.values() %}
+            <td>{{ val }}</td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </table>
 </body>
 </html>

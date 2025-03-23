@@ -1,4 +1,3 @@
-
-uploads/test_data.csv
-static/styles
-portfolio_data.xlsx
+.env
+apitest.py
+infotest.py

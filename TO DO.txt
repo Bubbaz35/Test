@@ -1,5 +1,0 @@
-- Create a date range slider where the app uses the first trade date and the current date as the min / max values
-- Create a calendar with the corresponding days P/L included
-- Create larger date range with bigger dataset
-- A more efficient way to read data without having yo use CSV file
-- Change from Degiro to Interactive Brokers API

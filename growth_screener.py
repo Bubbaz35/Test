@@ -14,7 +14,7 @@ missing_data_tickers = []
 rejected_stocks = []
 
 # Define the delay between requests (in seconds)
-REQUEST_DELAY = 0.0001  # Adjust based on the API rate limits
+REQUEST_DELAY = 0.001  # Adjust based on the API rate limits
 
 # Set volume threshold for "high volume" (adjust based on your needs)
 VOLUME_THRESHOLD = 10000000  # Example: Exclude stocks with daily volume > 10M
@@ -182,7 +182,7 @@ df_missing = pd.DataFrame(missing_data_tickers)
 df_rejected = pd.DataFrame(rejected_stocks)
 
 # Save the results to an Excel file with separate sheets
-with pd.ExcelWriter('stocks_analysis_results.xlsx') as writer:
+with pd.ExcelWriter('Data\stocks_analysis_results.xlsx') as writer:
     df_results.to_excel(writer, sheet_name='Analysis Results', index=False)
     df_missing.to_excel(writer, sheet_name='Missing Data', index=False)
     df_rejected.to_excel(writer, sheet_name='Rejected Stocks', index=False)
